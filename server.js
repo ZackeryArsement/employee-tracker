@@ -5,17 +5,20 @@ const cTable = require('console.table');
 const Database = require('./lib/Database');
 const databaseQuery = new Database();
 
+// Initialize user prompt
 showPrompt();
 
+// Provide the user with a list of actions to perform
 async function showPrompt(){
     const response = await inquirer.prompt(
     {
         type: 'list',
         name: 'selection',
         message: 'What would you like to do?',
-        choices: ['View all Departments', 'Add Department', 'View all Roles', 'Add Role', 'View all Employees', 'Update an Employee Role', 'Add Employee']
+        choices: ['View all Departments', 'Add Department', 'View all Roles', 'Add Role', 'View all Employees', 'Update an Employee Role', 'Update an Employee\'s Manager', 'Add Employee']
     });
 
+    // Perform different functions depending on the user selection
     switch(response.selection){
       case 'View all Departments':
         viewDepartments();
@@ -44,9 +47,15 @@ async function showPrompt(){
       case 'Update an Employee Role':
         updateRole();
         return;
+      
+      case 'Update an Employee\'s Manager':
+        updateManager();
+        return;
+      
       };
 };
 
+// View all departments in the database
 async function viewDepartments(){
   try{
     const data = await databaseQuery.showDepartment();
@@ -60,6 +69,35 @@ async function viewDepartments(){
   }
 };
 
+// View all roles in the database with their respective departments and salaries
+async function viewRoles(){
+  try{
+    const data = await databaseQuery.showRoleDisplay();
+    console.table(data);
+  }
+  catch(err){
+    console.log(err);
+  }
+  finally{
+    showPrompt()
+  }
+};
+
+// View all employees along with their department, salary, and manager
+async function viewEmployees(){
+  try{
+    const data = await databaseQuery.showEmployeeDisplay();
+    console.table(data);
+  }
+  catch(err){
+    console.log(err);
+  }
+  finally{
+    showPrompt()
+  }
+};
+
+// Add a department to the database
 async function addDepartment(){
   try{
     const dep = await inquirer.prompt(
@@ -81,63 +119,7 @@ async function addDepartment(){
   }
 };
 
-async function deleteDepartment(){
-  try{
-    const depData = await databaseQuery.showDepartment();
-    const depArray = await depData.map(function(value,index) {return value['department']; });
-    const idArray = await depData.map(function(value,index) {return value['id']; });
-
-    // Arrays associated to roles.id and roles.department_id
-    const roleData = await databaseQuery.getRoleData();
-    const roleDepArray = await roleData.map(function(value,index) {return value['department_id']; });
-    const roleIDArray = await roleData.map(function(value,index) {return value['id']; });
-
-
-    const dep = await inquirer.prompt(
-      {
-        type: 'list',
-        name: 'title',
-        message: 'What department would you like to delete?',
-        choices: depArray
-      }
-    ).then((input) => {
-      // The departments id associated to the selected department name
-      const depID = idArray[depArray.indexOf(input.title)];
-      console.log(depID);
-      console.log(roleDepArray);
-
-      // If there are any roles associated to selected department ID then delete each row
-      while(roleDepArray.indexOf(depID) > 0){
-        console.log('ran');
-        databaseQuery.deleteRole(roleIDArray[roleDepArray.indexOf(depID)]);
-      }
-
-      // Find the department that has an id that shares the same index as the chosen department_name
-      databaseQuery.deleteDepart(depID);
-      console.log(`Deleted ${input.title} from the database`)
-    });
-  }
-  catch(err){
-    console.log(err);
-  }
-  finally{
-    showPrompt()
-  }
-};
-
-async function viewRoles(){
-  try{
-    const data = await databaseQuery.showRoleDisplay();
-    console.table(data);
-  }
-  catch(err){
-    console.log(err);
-  }
-  finally{
-    showPrompt()
-  }
-};
-
+// Add a role to the database... including the role salary and department
 async function addRole(){
   try{
       const depData = await databaseQuery.showDepartment();
@@ -176,19 +158,7 @@ async function addRole(){
   }
 };
 
-async function viewEmployees(){
-  try{
-    const data = await databaseQuery.showEmployeeDisplay();
-    console.table(data);
-  }
-  catch(err){
-    console.log(err);
-  }
-  finally{
-    showPrompt()
-  }
-};
-
+// Add an employee to the database... including its role and manager name
 async function addEmployee(){
   try{
       const roleData = await databaseQuery.getRoleData();
@@ -251,6 +221,7 @@ async function addEmployee(){
   }
 };
 
+// Update the role of an employee
 async function updateRole(){
   const roleData = await databaseQuery.getRoleData();
   const roleArray = await roleData.map(function(value,index) {return value['title']; });
@@ -286,4 +257,40 @@ async function updateRole(){
   finally{
     showPrompt()
   }
-}
+};
+
+// Update the manager of an employee
+async function updateManager(){
+  const employeeData = await databaseQuery.getEmployeeData();
+  const employeeFirst = await employeeData.map(function(value,index) {return value['first_name']; });
+  const idArray = await employeeData.map(function(value,index) {return value['id']; });
+
+  try{
+    const dat = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'first_name',
+        message: 'Which employee would you like to update?',
+        choices: employeeFirst
+      },
+      {
+        type: 'list',
+        name: 'manager',
+        message: 'Who is the new manager of the employee?',
+        choices: employeeFirst
+      }
+      ]).then((input) => {
+      const managerID = idArray[employeeFirst.indexOf(input.manager)];
+      const id = idArray[employeeFirst.indexOf(input.first_name)];
+
+      databaseQuery.updateManager(managerID, id);
+      console.log(`${input.manager} is now the manager of ${input.first_name}!`)
+    });
+  }
+  catch(err){
+    console.log(err);
+  }
+  finally{
+    showPrompt()
+  }
+};
