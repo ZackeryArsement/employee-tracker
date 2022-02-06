@@ -13,7 +13,7 @@ async function showPrompt(){
         type: 'list',
         name: 'selection',
         message: 'What would you like to do?',
-        choices: ['View all Departments','Add Department', 'Delete Department', 'View all Roles','Add Role','View all Employees','Update an Employee Role','Add Employee']
+        choices: ['View all Departments', 'Add Department', 'View all Roles', 'Add Role', 'View all Employees', 'Update an Employee Role', 'Add Employee']
     });
 
     switch(response.selection){
@@ -24,9 +24,6 @@ async function showPrompt(){
       case 'Add Department':
         addDepartment();
         return;
-      
-      case 'Delete Department':
-        deleteDepartment();
 
       case 'View all Roles':
         viewRoles();
@@ -39,9 +36,13 @@ async function showPrompt(){
       case 'View all Employees':
         viewEmployees();
         return;
-        
+
       case 'Add Employee':
         addEmployee();
+        return;
+      
+      case 'Update an Employee Role':
+        updateRole();
         return;
       };
 };
@@ -249,3 +250,40 @@ async function addEmployee(){
     showPrompt()
   }
 };
+
+async function updateRole(){
+  const roleData = await databaseQuery.getRoleData();
+  const roleArray = await roleData.map(function(value,index) {return value['title']; });
+  const idArray = await roleData.map(function(value,index) {return value['id']; });
+
+  const employeeData = await databaseQuery.getEmployeeData();
+  const employeeFirst = await employeeData.map(function(value,index) {return value['first_name']; });
+
+  try{
+    const dat = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'first_name',
+        message: 'Which employee would you like to update?',
+        choices: employeeFirst
+      },
+      {
+        type: 'list',
+        name: 'role',
+        message: 'What is the new role of the employee?',
+        choices: roleArray
+      }
+      ]).then((input) => {
+      const roleID = idArray[roleArray.indexOf(input.role)];
+
+      databaseQuery.updateRole(roleID, input.first_name);
+      console.log(`${input.first_name} now has the role of ${input.role}!`)
+    });
+  }
+  catch(err){
+    console.log(err);
+  }
+  finally{
+    showPrompt()
+  }
+}
