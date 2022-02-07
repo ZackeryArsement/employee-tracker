@@ -3,12 +3,13 @@
 # employee-tracker
 Title: ***Employee Tracker*** \
 Developer: **Zackery Arsement** \
-Deployment Date:  2/6/2022 \
-For:  UT JavaScript Coding Bootcamp
+Deployment Date: 2/6/2022 \
+For: UT JavaScript Coding Bootcamp
 
 # Access Project
 
 - ### [Github Repository](https://github.com/ZackeryArsement/noteTaker)
+- ### [Walkthrough](https://watch.screencastify.com/v/EBGwQw924pGbHK30ln72)
 
 # Table of Contents
 
